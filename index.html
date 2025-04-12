@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级写字用纸量排行榜</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f9ff;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background-color: #f2f7ff;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fbfe;
+        }
+        .rank-1 {
+            background-color: #fff8e1;
+            font-weight: bold;
+        }
+        .rank-2 {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .rank-3 {
+            background-color: #fff3e0;
+            font-weight: bold;
+        }
+        .date-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .date-controls input {
+            flex: 1;
+            min-width: 180px;
+        }
+        .date-controls button {
+            flex: 1;
+            min-width: 120px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-style: italic;
+        }
+        .paper-count {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .highlight {
+            background-color: #e3f2fd;
+        }
+        .today-btn {
+            background-color: #4CAF50;
+        }
+        .today-btn:hover {
+            background-color: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+    <h1>班级写字用纸量排行榜</h1>
+    
+    <div class="card">
+        <h2>记录今日用纸量</h2>
+        <div class="form-group">
+            <label for="studentId">学号</label>
+            <input type="text" id="studentId" placeholder="请输入你的学号" required>
+        </div>
+        <div class="form-group">
+            <label for="paperCount">今日写字用纸量（张）</label>
+            <input type="number" id="paperCount" min="0" placeholder="请输入今日写字用纸数量" required>
+        </div>
+        <button onclick="recordPaperUsage()">提交记录</button>
+    </div>
+    
+    <div class="card">
+        <h2 id="rankingTitle">用纸量排行榜</h2>
+        <div class="date-controls">
+            <input type="date" id="viewDate">
+            <button onclick="loadRanking()">查看当日</button>
+            <button onclick="showToday()" class="today-btn">查看今日</button>
+            <button onclick="showOverall()">查看总排行</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="15%">排名</th>
+                    <th width="35%">学号</th>
+                    <th width="25%">日期</th>
+                    <th width="25%">用纸量（张）</th>
+                </tr>
+            </thead>
+            <tbody id="rankingBody">
+                <tr>
+                    <td colspan="4" class="no-data">暂无数据，请先提交记录</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 使用localStorage存储数据
+        let paperRecords = JSON.parse(localStorage.getItem('paperRecords')) || [];
+        
+        // 获取今天日期字符串（YYYY-MM-DD）
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        // 记录用纸量
+        function recordPaperUsage() {
+            const studentId = document.getElementById('studentId').value;
+            const paperCount = parseInt(document.getElementById('paperCount').value);
+            const today = getToday();
+            
+            if (!studentId || isNaN(paperCount)) {
+                alert('请填写完整的学号和用纸量！');
+                return;
+            }
+            
+            // 添加新记录
+            paperRecords.push({
+                studentId: studentId,
+                date: today,
+                count: paperCount
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('paperRecords', JSON.stringify(paperRecords));
+            
+            // 清空输入框
+            document.getElementById('studentId').value = '';
+            document.getElementById('paperCount').value = '';
+            
+            // 刷新排行榜
+            loadRanking();
+            alert('记录已保存！');
+        }
+        
+        // 加载排行榜
+        function loadRanking() {
+            const viewDate = document.getElementById('viewDate').value;
+            let filteredRecords = [];
+            
+            if (viewDate) {
+                filteredRecords = paperRecords.filter(record => record.date === viewDate);
+            } else {
+                filteredRecords = [...paperRecords];
+            }
+            
+            displayRanking(filteredRecords, viewDate || '所有日期');
+        }
+        
+        // 显示今日排行榜
+        function showToday() {
+            document.getElementById('viewDate').value = getToday();
+            loadRanking();
+        }
+        
+        // 显示总排行
+        function showOverall() {
+            document.getElementById('viewDate').value = '';
+            loadRanking();
+        }
+        
+        // 显示排行榜数据
+        function displayRanking(records, dateText) {
+            const rankingBody = document.getElementById('rankingBody');
+            const rankingTitle = document.getElementById('rankingTitle');
+            
+            rankingTitle.textContent = `用纸量排行榜 (${dateText})`;
+            
+            if (records.length === 0) {
+                rankingBody.innerHTML = '<tr><td colspan="4" class="no-data">暂无数据</td></tr>';
+                return;
+            }
+            
+            // 按用纸量排序
+            records.sort((a, b) => b.count - a.count);
+            
+            // 生成排行榜HTML
+            let html = '';
+            records.forEach((record, index) => {
+                const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                html += `
+                    <tr class="${rankClass}">
+                        <td>${index + 1}</td>
+                        <td>${record.studentId}</td>
+                        <td>${record.date}</td>
+                        <td class="paper-count">${record.count}</td>
+                    </tr>
+                `;
+            });
+            
+            rankingBody.innerHTML = html;
+        }
+        
+        // 初始化页面
+        document.getElementById('viewDate').value = getToday();
+        loadRanking();
+    </script>
+</body>
+</html>
